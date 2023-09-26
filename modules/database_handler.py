@@ -1,7 +1,7 @@
 import sqlite3
-import sqlite3 as sql
+from modules import gui
 try:
-    conn = sql.connect("obs_db.db")
+    conn = sqlite3.connect("obs_db.db")
     cursor = conn.cursor()
 except sqlite3.Error as e:
     print(e)
@@ -43,6 +43,25 @@ def add_admin(conn, admin_data):
     except sqlite3.Error as e:
         print(e)
         return None
-admin_data = [1,"Barış","Çetin","bariscetintr@gmail.com",12345]
 
-add_admin(conn,admin_data)
+
+def login(loginwindow,username,pwd):
+    cursor.execute('SELECT * FROM admins WHERE name = ? AND pwd = ?',(username,pwd))
+    user = cursor.fetchone()
+    if user:
+        print(f"Giriş Başarılı! {username},{pwd}")
+        global loginSuccess
+        loginSuccess = True
+        loginwindow.destroy()
+
+    else:
+        print("Giriş Başarısız")
+        global loginSucces
+        loginSuccess = False
+
+
+def listadmin():
+    cursor.execute("SELECT * FROM admins")
+    userlist = cursor.fetchall()
+    for user in userlist:
+        print(user[0],user[1],user[2],user[3],user[4])
