@@ -1,67 +1,82 @@
+# database_handler.py
+
 import sqlite3
-from modules import gui
-try:
-    conn = sqlite3.connect("obs_db.db")
-    cursor = conn.cursor()
-except sqlite3.Error as e:
-    print(e)
 
-create_table = '''CREATE TABLE IF NOT EXISTS students (
-    student_id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    surname TEXT NOT NULL,
-    email TEXT UNIQUE,
-    phone TEXT
-);'''
-create_admin = '''CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    surname TEXT NOT NULL,
-    email TEXT UNIQUE,
-    pwd TEXT
-);'''
-cursor.execute(create_table)
-cursor.execute(create_admin)
-def add_student(conn, student_data):
-    cursor = conn.cursor()
+def connect_to_database():
     try:
-        cursor.execute("INSERT INTO students (student_id, name, surname, email, phone) VALUES (?, ?, ?, ?, ?)",
-                       student_data)
-        conn.commit()
-        return cursor.lastrowid
+        conn = sqlite3.connect("obs_db.db")
+        cursor = conn.cursor()
+        return conn, cursor
     except sqlite3.Error as e:
         print(e)
-        return None
+        return None, None
 
-def add_admin(conn, admin_data):
-    cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO admins (id, name, surname, email, pwd) VALUES (?, ?, ?, ?, ?)",
-                       admin_data)
+def create_tables():
+    conn, cursor = connect_to_database()
+    if conn:
+        create_table = '''CREATE TABLE IF NOT EXISTS students (
+            student_id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            surname TEXT NOT NULL,
+            email TEXT UNIQUE,
+            phone TEXT
+        );'''
+        create_admin = '''CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            surname TEXT NOT NULL,
+            email TEXT UNIQUE,
+            pwd TEXT
+        );'''
+        cursor.execute(create_table)
+        cursor.execute(create_admin)
         conn.commit()
-        return cursor.lastrowid
-    except sqlite3.Error as e:
-        print(e)
-        return None
-
-
-def login(loginwindow,username,pwd):
-    cursor.execute('SELECT * FROM admins WHERE name = ? AND pwd = ?',(username,pwd))
-    user = cursor.fetchone()
-    if user:
-        print(f"Giriş Başarılı! {username},{pwd}")
-        global loginSuccess
-        loginSuccess = True
-        loginwindow.destroy()
-
+        conn.close()
     else:
-        print("Giriş Başarısız")
-        global loginSucces
-        loginSuccess = False
+        print("Veritabanına bağlanılamadı.")
 
+def login(username, password):
+    conn, cursor = connect_to_database()
+    if conn:
+        cursor.execute('SELECT * FROM admins WHERE name = ? AND pwd = ?', (username, password))
+        user = cursor.fetchone()
+        conn.close()
+        return user
+    else:
+        print("Veritabanına bağlanılamadı.")
+        return None
 
-def listadmin():
-    cursor.execute("SELECT * FROM admins")
-    userlist = cursor.fetchall()
-    for user in userlist:
-        print(user[0],user[1],user[2],user[3],user[4])
+def add_student(name, surname, email, phone):
+    try:
+        conn = sqlite3.connect("obs_db.db")
+        cursor = conn.cursor()
+
+        insert_query = "INSERT INTO students (name, surname, email, phone) VALUES (?, ?, ?, ?)"
+        student_data = (name, surname, email, phone)
+
+        cursor.execute(insert_query, student_data)
+        conn.commit()
+
+        print("Öğrenci başarıyla eklendi!")
+
+        conn.close()
+
+    except sqlite3.Error as e:
+        print("Öğrenci eklenirken bir hata oluştu:", e)
+
+def get_students():
+    try:
+        conn = sqlite3.connect("obs_db.db")
+        cursor = conn.cursor()
+
+        select_query = "SELECT student_id, name, surname, email, phone FROM students"
+        cursor.execute(select_query)
+        students = cursor.fetchall()
+
+        conn.close()
+
+        return students
+
+    except sqlite3.Error as e:
+        print("Öğrenciler alınırken bir hata oluştu:", e)
+        return []

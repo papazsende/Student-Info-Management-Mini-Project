@@ -1,9 +1,9 @@
-from modules import gui
+# main.py
+
 from modules import database_handler as dbh
+from modules import gui
+
 if __name__ == "__main__":
-    gui.startGui()
-    dbh.listadmin()
-
-
-
+    dbh.create_tables()
+    gui.startGui()  # mainWindow'u bu şekilde alın
 
